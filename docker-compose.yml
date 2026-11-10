@@ -1,0 +1,10 @@
+services:
+  dac:
+    build: .
+    container_name: dollar-ads-club
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./dados:/data          # dados.sqlite3, tokens.json, avisos.log e o modelo do rembg
+    ports:
+      - "127.0.0.1:8000:8000"  # só local; o cloudflared publica ads.<domínio> -> http://localhost:8000

@@ -1,0 +1,6 @@
+.env
+dados/
+*.sqlite3
+tokens.json
+avisos.log
+__pycache__/
