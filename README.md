@@ -1,30 +1,27 @@
-# Dollar Ads Club · MVP
+# Dollar Ads Club
 
-Cadastrar → IA prepara (Claude API) → conferir → aprovar → publicar no Mercado Livre (fundo branco, categoria, anúncio e descrição).
-FastAPI + SQLite, um contêiner.
+Endereço: **https://loudhouse.com.br/dollar-ads-club/** (login de empresa, afiliado e admin).
 
-## Subir (Docker)
-```bash
-cp .env.example .env      # preencher
-docker compose up -d --build
-docker compose logs -f
-```
-- Porta só em `127.0.0.1:8000`. No cloudflared: `ads.<domínio>` → `http://localhost:8000`.
-- Dados em `./dados/` (volume): `dados.sqlite3`, `tokens.json` (acesso à conta do ML), `avisos.log`. Pôr essa pasta na cópia diária.
-- 1ª foto com fundo branco baixa o modelo do rembg (~180 MB) para `./dados/modelos/`.
+- **Empresa:** conecta N contas do Mercado Livre (OAuth, sem senha), cadastra produtos (fundo branco feito no navegador), ativa/pausa e compra créditos (Mercado Pago).
+- **Afiliado:** vê produtos ativos de empresas com crédito e com conta livre, confere e envia. O sistema publica na próxima conta livre.
+- **Regras:** 1 crédito = 1 anúncio; o crédito é reservado no envio, devolvido se falhar e só conta como gasto quando a API confirma `active`. 1 anúncio por produto por conta (o ML proíbe duplicados). O afiliado ganha R$ 0,10 por anúncio ativo, liberado após `LIBERAR_DIAS` se o anúncio continuar ativo. Saque mínimo de R$ 10, por Pix, pago pelo admin.
+- Uma rotina a cada 10 min confere anúncios em análise e libera ganhos.
 
-## Mercado Livre
-1. App no DevCenter: redirect `https://ads.<domínio>/oauth/callback`, leitura e escrita, "Publicação e sincronização", avisos em `https://ads.<domínio>/avisos`.
-2. ID e senha do app no `.env`.
-3. Fernando abre `https://ads.<domínio>/oauth/inicio` (com o login) e autoriza 1 vez.
-4. Teste: 1 produto → conferir → aprovar. Resultado ou motivo da recusa em Medidas.
+## Colocar no ar (servidor local, o mesmo do site do Erivelto)
+
+1. **Servidor:** `git clone` → `cp .env.example .env` → preencher → `docker compose up -d --build`.
+   Teste local: `curl http://localhost:8001/dollar-ads-club/saude`.
+2. **Admin:** `docker compose exec dac python app.py admin seu@email.com SENHA-FORTE`.
+3. **Túnel (cloudflared, já usado pelo Erivelto):** adicionar o hostname `dac-origem.loudhouse.com.br` → `http://localhost:8001`.
+4. **Worker (Cloudflare → Workers):** criar com `cloudflare/worker.js`; variáveis `ORIGEM=https://dac-origem.loudhouse.com.br` e secret `SEGREDO` (= `ORIGEM_SEGREDO`). Em *Settings → Domains & Routes* adicionar a rota `loudhouse.com.br/dollar-ads-club*` (zona loudhouse.com.br). A rota tem prioridade sobre o Pages; o resto do site não muda.
+5. **Mercado Livre (DevCenter):** redirect `https://loudhouse.com.br/dollar-ads-club/oauth/callback`; notificações `https://loudhouse.com.br/dollar-ads-club/avisos` (tópico *items*); escopos de leitura, escrita e oferta de produtos.
+6. **Mercado Pago:** credenciais de produção no `.env`; webhook `https://loudhouse.com.br/dollar-ads-club/mp/webhook` (evento *Pagamentos*) e a chave secreta em `MP_WEBHOOK_SECRET`.
+7. **Backup diário** da pasta `dados/`.
 
 ## Atualizar
-```bash
-git pull && docker compose up -d --build
-```
+`git pull && docker compose up -d --build`
 
-## Pendente
-- Conferir `ANTHROPIC_MODEL` na documentação da Anthropic.
-- Login simples (Basic Auth): trocar pelo login da Fase 1 antes de outra empresa.
-- Nunca testado contra o ML (falta o app). `domain_discovery` a confirmar no DevCenter. GTIN nunca é inventado.
+## Antes do primeiro cliente
+- Revisão jurídica de `static/termos.html` e `static/privacidade.html` (modelos, campos entre colchetes).
+- Teste real: 1 empresa, 2 contas ML, 1 afiliado, 1 produto.
+- Campos obrigatórios variam por categoria; use "Avançado: atributos extras" (ex.: `{"attributes":[{"id":"MODEL","value_name":"X"}]}` ou `family_name`).

@@ -1,6 +1,45 @@
+# ---- Segredos (nunca no GitHub) ----
 .env
+.env.*
+!.env.example
+env.novo
+*.env
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+credentials*.json
+tokens*.json
+secrets*
+ 
+# ---- Dados do sistema (clientes, fotos, banco, logs) ----
 dados/
+data/
 *.sqlite3
-tokens.json
-avisos.log
+*.sqlite3-*
+*.db
+*.log
+backup*/
+*.bak
+*.dump
+ 
+# ---- Cloudflare / túnel ----
+.wrangler/
+.dev.vars
+cloudflared/*.json
+ 
+# ---- Python ----
 __pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+ 
+# ---- Editores e sistema ----
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
